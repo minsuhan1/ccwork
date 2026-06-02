@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ccwork 아키텍처</title>
+<style>
+  :root { color-scheme: light; }
+  body { font-family: 'Pretendard Variable', system-ui, sans-serif; margin: 0;
+         background: hsl(0 0% 94%); color: hsl(220 35% 14%); line-height: 1.6; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+  h1 { font-size: 1.6rem; margin-bottom: 0.25rem; }
+  .meta { color: hsl(0 0% 42%); font-size: 0.85rem; margin-bottom: 2rem; }
+  section { background: #fff; border: 1px solid hsl(0 0% 88%); border-radius: 1rem;
+            padding: 1.5rem 1.75rem; margin-bottom: 1.75rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  h2 { font-size: 1.15rem; margin: 0 0 0.75rem; }
+  .legend { font-size: 0.8rem; color: hsl(0 0% 42%); margin-bottom: 1rem; }
+  .mermaid { display: flex; justify-content: center; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>📐 ccwork 아키텍처</h1>
+    <p class="meta">React 19 + TS 노트 앱 · src/ 분석 기준 · 생성일 2026-06-03</p>
+
+    <section>
+      <h2>1. 컴포넌트·모듈 의존성</h2>
+      <p class="legend">화살표 A → B = "A가 B를 import/사용". 색은 레이어 구분 · 점선은 외부 백엔드 호출.</p>
+      <pre class="mermaid">
+graph LR
+  subgraph entry["진입점"]
+    main["main.tsx"]
+    App["App.tsx"]
+  end
+  subgraph components["컴포넌트"]
+    Layout["Layout.tsx"]
+    NoteList["NoteList.tsx"]
+    NoteItem["NoteItem.tsx"]
+    NoteEditor["NoteEditor.tsx"]
+  end
+  subgraph context["전역 상태"]
+    NotesContext["NotesContext.tsx<br/>(useNotes)"]
+  end
+  subgraph api["API 계층"]
+    notesApi["api/notes.ts"]
+  end
+  subgraph types["타입"]
+    note["types/note.ts"]
+  end
+  ext[("json-server<br/>db.json")]
+
+  main --> App
+  App --> NotesContext
+  App --> Layout
+  App --> NoteList
+  App --> NoteEditor
+  NoteList --> NotesContext
+  NoteList --> NoteItem
+  NoteEditor --> NotesContext
+  NoteItem --> note
+  NotesContext --> notesApi
+  NotesContext --> note
+  notesApi --> note
+  notesApi -. "fetch" .-> ext
+
+  classDef entry fill:#e0e7ff,stroke:#6366f1,color:#1e1b4b;
+  classDef comp  fill:#dbeafe,stroke:#3b82f6,color:#0c2d6b;
+  classDef ctx   fill:#dcfce7,stroke:#22c55e,color:#14532d;
+  classDef api   fill:#ffedd5,stroke:#f97316,color:#7c2d12;
+  classDef types fill:#f1f5f9,stroke:#94a3b8,color:#334155;
+  classDef ext   fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-dasharray:4 3;
+
+  class main,App entry;
+  class Layout,NoteList,NoteItem,NoteEditor comp;
+  class NotesContext ctx;
+  class notesApi api;
+  class note types;
+  class ext ext;
+      </pre>
+    </section>
+
+    <section>
+      <h2>2. 상태 흐름</h2>
+      <p class="legend">실선 = 데이터·호출 흐름, 점선 = props/이벤트 전달. 서버 상태(Context)와 UI 상태(App 로컬)는 분리되어 있다.</p>
+      <pre class="mermaid">
+flowchart TD
+  subgraph uiState["UI 상태 · App 로컬"]
+    sel["selectedNoteId / isCreating<br/>useState"]
+  end
+  subgraph serverState["서버 상태 · NotesContext"]
+    notesState["notes / loading / error"]
+  end
+
+  mount["NotesProvider 마운트"] -- useEffect --> fetch["api.fetchNotes()"]
+  fetch --> notesState
+  notesState -- "useNotes()" --> render["컴포넌트 렌더<br/>(NoteList · NoteEditor)"]
+
+  user["사용자 액션<br/>저장 · 삭제"] --> handler["컴포넌트 핸들러<br/>handleSave · onDelete"]
+  handler --> action["Context 액션<br/>createNote · updateNote · deleteNote"]
+  action --> apicall["api.createNote / updateNote / deleteNote"]
+  apicall -- 성공 --> optimistic["낙관적 갱신<br/>setNotes(prev =&gt; ...)"]
+  optimistic --> notesState
+  apicall -. "ok" .-> server[("json-server<br/>db.json")]
+
+  sel -. props .-> render
+  render -. "onSelect · onNewNote" .-> sel
+
+  classDef ctx   fill:#dcfce7,stroke:#22c55e,color:#14532d;
+  classDef ui    fill:#e0e7ff,stroke:#6366f1,color:#1e1b4b;
+  classDef act   fill:#ffedd5,stroke:#f97316,color:#7c2d12;
+  classDef ext   fill:#fef9c3,stroke:#eab308,color:#713f12,stroke-dasharray:4 3;
+
+  class notesState,fetch,mount ctx;
+  class sel ui;
+  class action,apicall,optimistic act;
+  class server ext;
+      </pre>
+    </section>
+  </div>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, theme: 'default', flowchart: { curve: 'basis' } });
+  </script>
+</body>
+</html>
