@@ -47,5 +47,10 @@ module.exports = {
         'test',
       ],
     ],
+    // 제목 소문자 강제
+    'subject-case': [2, 'always', 'lower-case'],
+
+    // 마침표 금지
+    'subject-full-stop': [2, 'never', '.'],
   },
 };
