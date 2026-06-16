@@ -14,15 +14,15 @@ React 19 + TypeScript + Vite 기반의 **노트 앱 실습 프로젝트**(강의
 
 ## 명령어
 
-| 명령어 | 설명 |
-|--------|------|
-| `npm run dev` | Vite(5173) + json-server(3001) **동시 실행** (concurrently) |
-| `npm run server` | json-server만 실행 (3001) |
-| `npm run build` | `tsc` 타입체크 후 Vite 프로덕션 빌드 |
-| `npm run lint` | ESLint 검사 **+ 자동 수정** (`--fix` 포함됨) |
-| `npm run format` | Prettier 포맷 |
-| `npm test` | Vitest 1회 실행 |
-| `npm run test:watch` | Vitest watch 모드 |
+| 명령어               | 설명                                                        |
+| -------------------- | ----------------------------------------------------------- |
+| `npm run dev`        | Vite(5173) + json-server(3001) **동시 실행** (concurrently) |
+| `npm run server`     | json-server만 실행 (3001)                                   |
+| `npm run build`      | `tsc` 타입체크 후 Vite 프로덕션 빌드                        |
+| `npm run lint`       | ESLint 검사 **+ 자동 수정** (`--fix` 포함됨)                |
+| `npm run format`     | Prettier 포맷                                               |
+| `npm test`           | Vitest 1회 실행                                             |
+| `npm run test:watch` | Vitest watch 모드                                           |
 
 - 단일 테스트 실행: `npx vitest run src/path/to/file.test.tsx` 또는 `-t "테스트명"`.
 - 프론트와 API는 별도 프로세스다. `npm run dev` 없이 컴포넌트를 띄우면 fetch가
@@ -75,3 +75,13 @@ React 19 + TypeScript + Vite 기반의 **노트 앱 실습 프로젝트**(강의
 Vitest + Testing Library + jsdom. 전역 API(`describe`/`it`/`expect`)는
 `vite.config.ts`의 `globals: true`로 활성화, 셋업은 `src/test-setup.ts`. 아직
 작성된 테스트 파일은 없다 — 테스트는 컴포넌트 옆에 `*.test.tsx`로 둔다.
+
+## 커밋 규칙
+
+husky 훅으로 강제(`commitlint.config.cjs`). 어기면 커밋이 차단된다.
+
+- 형식: `<type>: <제목>` + 빈 줄 + 본문 (Conventional Commits).
+- type: `build`/`chore`/`ci`/`docs`/`feat`/`fix`/`init`/`perf`/`refactor`/`revert`/`style`/`test` (소문자).
+- 제목: 필수, 첫 줄 전체 72자 이내, 끝에 마침표 금지.
+- 본문: 필수, 빈 줄 제외 **최소 2줄** (`-m` 1회로는 부족 → `-m` 여러 번 또는 에디터).
+- commit 시 pre-commit 훅이 staged 파일에 `eslint --fix` + `prettier` 자동 적용.
